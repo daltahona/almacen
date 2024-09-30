@@ -3,7 +3,6 @@ import { database } from "../database/db";
 import { Cliente } from "./Cliente";
 
 export class Venta extends Model {
-  public id!: number;
   public fechaVenta!: string;
   public subtotal!: number;
   public impuestos!: number;
@@ -14,7 +13,6 @@ export class Venta extends Model {
 }
 
 export interface VentaI {
-  id: number;
   fechaVenta: string;
   subtotal: number;
   impuestos: number;
@@ -26,11 +24,6 @@ export interface VentaI {
 
 Venta.init(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
     fechaVenta: {
       type: DataTypes.STRING(255),
       allowNull: false,
