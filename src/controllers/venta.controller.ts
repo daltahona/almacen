@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Venta, VentaI } from '../models/Venta';
+import { NextFunction } from 'express';
 import { Cliente, ClienteI } from '../models/Cliente';
 
 export class VentaController {
@@ -11,32 +12,40 @@ export class VentaController {
         }
     }
 
-    public async getOneVenta(req: Request, res: Response): Promise<void> {
+    public async getOneVenta(req: Request, res: Response, next: NextFunction): Promise<void> {
         const { id: idParam } = req.params;
-
+    
         try {
             const venta: VentaI | null = await Venta.findOne({
-                where: {
+                where: { 
                     id: idParam,
-                },
+                    isHidden: false // Asegúrate de incluir este filtro
+                }
             });
-
+    
             if (venta) {
                 res.status(200).json(venta);
             } else {
-                res.status(404).json({ msg: "La venta no existe" });
+                res.status(300).json({ msg: "La venta no existe o está oculto" }); // Cambia a 404 para mejor semántica
             }
         } catch (error) {
-            res.status(500).json({ msg: "Error interno del servidor" });
+            console.error('Error al obtener la venta:', error);
+            res.status(500).json({ msg: "Error Internal" });
         }
+        next(); // Llamar a la siguiente función de middleware, aunque podrías omitirlo si no tienes más middleware en esta ruta
     }
 
-    public async getAllVenta(req: Request, res: Response): Promise<void> {
+    public async getAllVenta(req: Request, res: Response) {
         try {
-            const ventas: VentaI[] = await Venta.findAll(); // Sin condición
-            res.status(200).json({ ventas });
+            // Filtrar ventas ocultas
+            const ventas: Venta[] = await Venta.findAll({
+                where: { isHidden: false } // Asegúrate de incluir este filtro
+            });
+    
+            res.status(200).json({ venta: ventas });
         } catch (error) {
-            res.status(500).send({ error: 'Error al obtener las ventas' });
+            console.error('Error al obtener todos las ventas:', error);
+            res.status(500).json({ msg: "Error al obtener las ventas" });
         }
     }
 
@@ -98,22 +107,30 @@ export class VentaController {
         }
     }
 
-    public async hideVenta(req: Request, res: Response): Promise<void> {
-        const { id: pk } = req.params;
-        try {
-            const ventaExist: VentaI | null = await Venta.findOne({
-                where: { id: pk, estado: true }
-            });
-
-            if (!ventaExist) {
-                res.status(404).json({ msg: "La venta no existe o ya está inactiva" });
-            }
-
-            await Venta.update({ estado: false }, { where: { id: pk } });
-            res.status(200).json({ msg: "Venta desactivada" });
-        } catch (error) {
-            console.error('Error al desactivar la venta:', error);
-            res.status(500).send({ error: 'Error interno del servidor' });
-        }
-    }
+// Ocultar un cliente (eliminación avanzada)
+async hideVenta(req: Request, res: Response): Promise<void> {
+    const ventaId = req.params.id;
+    console.log(`Ejecutando hideVenta para el ID: ${ventaId}`);
+  
+    try {
+      const venta = await Venta.findByPk(ventaId);
+  
+      if (!venta) {
+        res.status(404).json({ message: 'Venta no encontrado' });
+      } else {
+        // Actualizar el venta ocultándolo (cambio lógico)
+        await venta.update({ isHidden: true });
+        res.json({
+          message: 'Venta ocultado correctamente',
+          venta: venta
+        });
+      }
+    } catch (error: any) {
+        console.error('Error en hideVenta:', error);
+        res.status(500).json({
+          message: 'Error al ocultar la venta',
+          error: error.message
+        });
+      }
+}
 }

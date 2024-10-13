@@ -11,5 +11,6 @@ export class TipoProductoRoutes {
     app.route("/tipoProducto").post(this.tipoProductoController.createTipoProducto)
     app.route("/tipoProducto/:id").put(this.tipoProductoController.updateTipoProducto)
     app.route("/tipoProducto/:id").delete(this.tipoProductoController.deleteTipoProducto)
+    app.route('/tipoProducto/:id').patch(this.tipoProductoController.hideTipoProducto);
   }
 }

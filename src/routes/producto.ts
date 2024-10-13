@@ -11,6 +11,6 @@ export class ProductoRoutes {
         app.route("/producto").post(this.ProductoController.createProducto)
         app.route("/producto/:id").put(this.ProductoController.updateProducto)
         app.route("/producto/:id").delete(this.ProductoController.deleteProducto)
-        app.route("/producto/:id/hide").put(this.ProductoController.hideProducto)
+        app.route("/producto/:id").patch(this.ProductoController.hideProducto)
     }
 }

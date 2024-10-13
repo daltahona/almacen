@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { Producto, ProductoI } from '../models/Producto';
 import { TipoProducto } from '../models/TipoProducto';
+import { NextFunction } from 'express';
+import { where } from 'sequelize/types';
 
 export class ProductoController {
   public async test(req: Request, res: Response): Promise<void> {
@@ -11,51 +13,72 @@ export class ProductoController {
     }
   }
 
-  public async getOneProducto(req: Request, res: Response): Promise<void> {
+  public async getOneProducto(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { id: idParam } = req.params;
 
     try {
-      const producto: ProductoI | null = await Producto.findOne({
-        where: {
-          id: idParam,
-        },
-      });
+        const producto: ProductoI | null = await Producto.findOne({
+            where: { 
+                id: idParam,
+                isHidden: false // Asegúrate de incluir este filtro
+            }
+        });
 
-      if (producto) {
-        res.status(200).json(producto);
-      } else {
-        res.status(404).json({ msg: "El producto no existe" });
-      }
+        if (producto) {
+            res.status(200).json(producto);
+        } else {
+            res.status(300).json({ msg: "El Producto no existe o está oculto" }); // Cambia a 404 para mejor semántica
+        }
     } catch (error) {
-      res.status(500).json({ msg: "Error interno del servidor" });
+        console.error('Error al obtener el Producto:', error);
+        res.status(500).json({ msg: "Error Internal" });
     }
-  }
+    next(); // Llamar a la siguiente función de middleware, aunque podrías omitirlo si no tienes más middleware en esta ruta
+}
 
-  public async getAllProducto(req: Request, res: Response): Promise<void> {
+  public async getAllProducto(req: Request, res: Response) {
     try {
-      const productos: ProductoI[] = await Producto.findAll(); // Sin condición
-      res.status(200).json({ productos });
+        // Filtrar productos ocultos
+        const productos: ProductoI[] = await Producto.findAll({
+            where: { isHidden: false } // Asegúrate de incluir este filtro
+        });
+
+        res.status(200).json({ producto: productos });
     } catch (error) {
-      res.status(500).send({ error: 'Error al obtener los productos' });
+        console.error('Error al obtener todos los productos:', error);
+        res.status(500).json({ msg: "Error al obtener los productos" });
     }
+}
+
+public async createProducto(req: Request, res:Response){
+  const {
+      nombre,
+      marca,
+      precio,
+      stockMin,
+      cantidad,
+      TipoProducto_id
+  } = req.body;
+
+  try {
+      let body:ProductoI = {
+          nombre,
+          marca,
+          precio,
+          stockMin,
+          cantidad,
+          TipoProducto_id
+
+      } 
+
+      const producto:ProductoI = await Producto.create({...body});
+      res.status(200).json({producto});
+
+  } catch (error) {
+
   }
 
-  public async createProducto(req: Request, res: Response): Promise<void> {
-    const { nombre, marca, precio, stockMin, cantidad, TipoProducto_id } = req.body;
-    try {
-      const producto: ProductoI = await Producto.create({
-        nombre,
-        marca,
-        precio,
-        stockMin,
-        cantidad,
-        TipoProducto_id,
-      });
-      res.status(201).json({ producto });
-    } catch (error) {
-      res.status(500).send({ error: 'Error al crear el producto' });
-    }
-  }
+}
 
   public async updateProducto(req: Request, res: Response): Promise<void> {
     const { id: pk } = req.params;
@@ -98,22 +121,30 @@ export class ProductoController {
     }
   }
 
-  public async hideProducto(req: Request, res: Response): Promise<void> {
-    const { id: pk } = req.params;
-    try {
-      const productoExist: ProductoI | null = await Producto.findOne({
-        where: { id: pk, estado: true },
+// Ocultar un producto (eliminación avanzada)
+async hideProducto(req: Request, res: Response): Promise<void> {
+  const productoId = req.params.id;
+  console.log(`Ejecutando hideProducto para el ID: ${productoId}`);
+
+  try {
+    const producto = await Producto.findByPk(productoId);
+
+    if (!producto) {
+      res.status(404).json({ message: 'Producto no encontrado' });
+    } else {
+      // Actualizar el producto ocultándolo (cambio lógico)
+      await producto.update({ isHidden: true });
+      res.json({
+        message: 'Producto ocultado correctamente',
+        producto: producto
       });
-
-      if (!productoExist) {
-        res.status(404).json({ msg: "El producto no existe o ya está inactivo" });
-      }
-
-      await Producto.update({ estado: false }, { where: { id: pk } });
-      res.status(200).json({ msg: "Producto desactivado" });
-    } catch (error) {
-      console.error('Error al desactivar el producto:', error);
-      res.status(500).send({ error: 'Error interno del servidor' });
     }
-  }
+  } catch (error: any) {
+      console.error('Error en hideProducto:', error);
+      res.status(500).json({
+        message: 'Error al ocultar el Producto',
+        error: error.message
+      });
+    }
+}
 }

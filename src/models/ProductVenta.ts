@@ -9,6 +9,7 @@ export class ProductVenta extends Model {
   public cantidad!: number;
   public precio!: number;
   public total!: number;
+  public estado!: boolean;
 }
 
 export interface ProductVentaI {
@@ -17,6 +18,7 @@ export interface ProductVentaI {
   cantidad: number;
   precio: number;
   total: number;
+  estado?: boolean;
 }
 
 ProductVenta.init(
@@ -49,6 +51,15 @@ ProductVenta.init(
       type: DataTypes.FLOAT,
       allowNull: false,
     },
+    estado: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
+    isHidden: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Por defecto no está oculto
+  },
   },
   {
     tableName: "product_venta",

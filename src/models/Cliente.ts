@@ -2,50 +2,61 @@ import { Model, DataTypes } from "sequelize";
 import { database } from "../database/db";
 
 export class Cliente extends Model {
-  public nombreCliente!: string;
-  public direccionCliente!: string;
-  public telefonoCliente!: string;
-  public correoCliente!: string;
-  public passwordCliente!: string;
+  public nombre!: string;
+  public direccion!: string;
+  public telefono!: string;
+  public correo!: string;
+  public password!: string;
+  public estado!: boolean;
 
 }
 
 export interface ClienteI {
-    nombreCliente: string;
-    direccionCliente: string;
-    telefonoCliente: string;
-    correoCliente: string;
-    passwordCliente: string;
+    nombre: string;
+    direccion: string;
+    telefono: string;
+    correo: string;
+    password: string;
+    estado?: boolean;
 }
 
 Cliente.init(
   {
-    nombreCliente: {
+    nombre: {
         type: DataTypes.STRING,
         allowNull: false
       },
-    direccionCliente: {
+    direccion: {
         type: DataTypes.STRING,
         allowNull: false
       },
-    telefonoCliente: {
+    telefono: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true
       },
-    correoCliente: {
+    correo: {
         type: DataTypes.STRING,
         allowNull: false
       },
-    passwordCliente: {
+    password: {
         type: DataTypes.STRING,
         allowNull: false
-      } 
+      },
+      estado: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
+      },
+      isHidden: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false, // Por defecto no está oculto
+    },
   },
   {
     tableName: "clientes",
     sequelize: database,
-    timestamps: true
+    timestamps: true,
   }
 );
 

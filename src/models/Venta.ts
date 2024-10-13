@@ -19,7 +19,7 @@ export interface VentaI {
   descuentos: number;
   total: number;
   clientes_id: number;
-  estado: boolean;
+  estado?: boolean;
 }
 
 Venta.init(
@@ -56,7 +56,11 @@ Venta.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true
-    }
+    },
+    isHidden: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Por defecto no está oculto
+  },
   },
   {
     tableName: "ventas",

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ProductVenta, ProductVentaI } from '../models/ProductVenta';
 import { Producto, ProductoI } from '../models/Producto';
 import { Venta, VentaI } from '../models/Venta';
+import { NextFunction } from 'express';
 
 export class ProductVentaController {
   public async test(req: Request, res: Response): Promise<void> {
@@ -12,34 +13,42 @@ export class ProductVentaController {
     }
   }
 
-  public async getOneProductVenta(req: Request, res: Response): Promise<void> {
+  public async getOneProductVenta(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { id: idParam } = req.params;
-
+  
     try {
-      const productVenta: ProductVentaI | null = await ProductVenta.findOne({
-        where: {
-          id: idParam,
-        },
-      });
-
-      if (productVenta) {
-        res.status(200).json(productVenta);
-      } else {
-        res.status(404).json({ msg: "La relación producto-venta no existe" });
-      }
+        const productVenta: ProductVentaI | null = await ProductVenta.findOne({
+            where: { 
+                id: idParam,
+                isHidden: false // Asegúrate de incluir este filtro
+            }
+        });
+  
+        if (productVenta) {
+            res.status(200).json(productVenta);
+        } else {
+            res.status(300).json({ msg: "El Producto de Venta no existe o está oculto" }); // Cambia a 404 para mejor semántica
+        }
     } catch (error) {
-      res.status(500).json({ msg: "Error interno del servidor" });
+        console.error('Error al obtener el producto de venta:', error);
+        res.status(500).json({ msg: "Error Internal" });
     }
+    next(); // Llamar a la siguiente función de middleware, aunque podrías omitirlo si no tienes más middleware en esta ruta
   }
 
-  public async getAllProductVenta(req: Request, res: Response): Promise<void> {
+  public async getAllProductVenta(req: Request, res: Response) {
     try {
-      const productVentas: ProductVentaI[] = await ProductVenta.findAll();
-      res.status(200).json({ productVentas });
+        // Filtrar Productos de ventas ocultos
+        const productVentas: ProductVentaI[] = await ProductVenta.findAll({
+            where: { isHidden: false } // Asegúrate de incluir este filtro
+        });
+
+        res.status(200).json({ ProductVenta: productVentas });
     } catch (error) {
-      res.status(500).send({ error: 'Error al obtener las relaciones producto-venta' });
+        console.error('Error al obtener todos los productos de ventas:', error);
+        res.status(500).json({ msg: "Error al obtener los productos de ventas" });
     }
-  }
+}
 
   public async createProductVenta(req: Request, res: Response): Promise<void> {
     const { producto_id, venta_id, cantidad, precio, total } = req.body;
@@ -97,4 +106,31 @@ export class ProductVentaController {
       res.status(500).json({ msg: "Error Internal" });
     }
   }
+
+  async hideProductVenta(req: Request, res: Response): Promise<void> {
+    const productVentaId = req.params.id;
+    console.log(`Ejecutando hideProductVenta para el ID: ${productVentaId}`);
+  
+    try {
+      const productVenta = await ProductVenta.findByPk(productVentaId);
+  
+      if (!productVenta) {
+        res.status(404).json({ message: 'Producto de Venta no encontrado' });
+      } else {
+        // Actualizar el producto de venta ocultándolo (cambio lógico)
+        await productVenta.update({ isHidden: true });
+        res.json({
+          message: 'Producto de Venta ocultado correctamente',
+          productVenta: productVenta
+        });
+      }
+    } catch (error: any) {
+        console.error('Error en hideProductVenta:', error);
+        res.status(500).json({
+          message: 'Error al ocultar el Producto de Venta',
+          error: error.message
+        });
+      }
+}
+
 }

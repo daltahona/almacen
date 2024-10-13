@@ -14,58 +14,62 @@ export class ClienteController {
         }
     }
 
-    public async getAllCliente(req: Request, res:Response){
+    public async getAllCliente(req: Request, res: Response) {
         try {
-            // const cliente: ClienteI[] = await Cliente.findAll(
-            //     {
-            //         where: {activo: true}
-            //     }
-            const cliente: ClienteI[] = await Cliente.findAll() // select * from clientes;
-            res.status(200).json({cliente})
+            // Filtrar clientes ocultos
+            const clientes: ClienteI[] = await Cliente.findAll({
+                where: { isHidden: false } // Asegúrate de incluir este filtro
+            });
+    
+            res.status(200).json({ cliente: clientes });
         } catch (error) {
-
+            console.error('Error al obtener todos los clientes:', error);
+            res.status(500).json({ msg: "Error al obtener clientes" });
         }
     }
+    
 
 
-public async getOneCliente(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const { id: idParam } = req.params
-
-    try {
-        const cliente: ClienteI | null = await Cliente.findOne(
-            {
+    public async getOneCliente(req: Request, res: Response, next: NextFunction): Promise<void> {
+        const { id: idParam } = req.params;
+    
+        try {
+            const cliente: ClienteI | null = await Cliente.findOne({
                 where: { 
                     id: idParam,
+                    isHidden: false // Asegúrate de incluir este filtro
                 }
+            });
+    
+            if (cliente) {
+                res.status(200).json(cliente);
+            } else {
+                res.status(300).json({ msg: "El Cliente no existe o está oculto" }); // Cambia a 404 para mejor semántica
             }
-        )
-        if (cliente){
-            res.status(200).json(cliente)
-        } else {
-            res.status(300).json({msg: "El Cliente no existe"})
+        } catch (error) {
+            console.error('Error al obtener el cliente:', error);
+            res.status(500).json({ msg: "Error Internal" });
         }
-    } catch (error) {
-        res.status(500).json({msg: "Error Internal"})
+        next(); // Llamar a la siguiente función de middleware, aunque podrías omitirlo si no tienes más middleware en esta ruta
     }
-    next() // Llamar a la siguiente función de middleware
-}
+    
 
 public async createCliente(req: Request, res:Response){
     const {
-        nombreCliente,
-        direccionCliente,
-        telefonoCliente,
-        correoCliente,
-        passwordCliente
+        nombre,
+        direccion,
+        telefono,
+        correo,
+        password
     } = req.body;
 
     try {
         let body:ClienteI = {
-            nombreCliente,
-            direccionCliente,
-            telefonoCliente,
-            correoCliente,
-            passwordCliente
+            nombre,
+            direccion,
+            telefono,
+            correo,
+            password
         } 
 
         const cliente:ClienteI = await Cliente.create({...body});
@@ -81,21 +85,20 @@ public async updateCliente(req: Request, res: Response): Promise<void> {
     const { id: pk } = req.params;
 
     const {
-        id,
-        nombreCliente,
-        direccionCliente,
-        telefonoCliente,
-        correoCliente,
-        passwordCliente
+        nombre,
+        direccion,
+        telefono,
+        correo,
+        password
     } = req.body;
 
     try {
         let body: ClienteI = {
-            nombreCliente,
-            direccionCliente,
-            telefonoCliente,
-            correoCliente,
-            passwordCliente
+            nombre,
+            direccion,
+            telefono,
+            correo,
+            password
         };
 
         const clienteExist: ClienteI | null = await Cliente.findByPk(pk);
@@ -141,6 +144,32 @@ public async deleteCliente(req: Request, res: Response): Promise<void> {
     }
 }
 
-
+// Ocultar un cliente (eliminación avanzada)
+async hideCliente(req: Request, res: Response): Promise<void> {
+    const clienteId = req.params.id;
+    console.log(`Ejecutando hideCliente para el ID: ${clienteId}`);
+  
+    try {
+      const cliente = await Cliente.findByPk(clienteId);
+  
+      if (!cliente) {
+        res.status(404).json({ message: 'Cliente no encontrado' });
+      } else {
+        // Actualizar el cliente ocultándolo (cambio lógico)
+        await cliente.update({ isHidden: true });
+        res.json({
+          message: 'Cliente ocultado correctamente',
+          cliente: cliente
+        });
+      }
+    } catch (error: any) {
+        console.error('Error en hideCliente:', error);
+        res.status(500).json({
+          message: 'Error al ocultar el cliente',
+          error: error.message
+        });
+      }
+}
+  
 
 }

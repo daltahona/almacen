@@ -23,7 +23,7 @@ export class App {
     private middlewares() {
         this.app.use(morgan('dev'));
         this.app.use(cors({
-            origin: 'http://localhost:4200', // Asegúrate de que esto esté correcto
+            origin: '*', // Asegúrate de que esto esté correcto
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             credentials: true
         }));

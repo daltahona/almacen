@@ -11,6 +11,6 @@ export class VentaRoutes {
     app.route("/venta").post(this.VentaController.createVenta)
     app.route("/venta/:id").put(this.VentaController.updateVenta)
     app.route("/venta/:id").delete(this.VentaController.deleteVenta)
-    app.route("/venta/:id/hide").put(this.VentaController.hideVenta)
+    app.route("/venta/:id").patch(this.VentaController.hideVenta)
   }
 }

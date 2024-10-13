@@ -9,6 +9,7 @@ export class Producto extends Model {
   public stockMin!: number;
   public cantidad!: number;
   public TipoProducto_id!: number;
+  public estado!: boolean;
 }
 
 export interface ProductoI {
@@ -18,6 +19,7 @@ export interface ProductoI {
   stockMin: number;
   cantidad: number;
   TipoProducto_id: number;
+  estado?: boolean;
 }
 
 Producto.init(
@@ -50,6 +52,15 @@ Producto.init(
         key: 'id',
       },
     },
+    estado: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
+    isHidden: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false, // Por defecto no está oculto
+  },
   },
   {
     tableName: "productos",

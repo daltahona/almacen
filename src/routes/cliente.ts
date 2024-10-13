@@ -13,5 +13,7 @@ export class ClienteRoutes {
         app.route("/cliente").post(this.clienteController.createCliente)
         app.route("/cliente/:id").put(this.clienteController.updateCliente)
         app.route("/cliente/:id").delete(this.clienteController.deleteCliente)
+        app.route('/cliente/:id').patch(this.clienteController.hideCliente);
+
     }
 }
